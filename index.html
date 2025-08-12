@@ -1,0 +1,534 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARKTRAINING - El Santuario Interior</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Cormorant+Garamond:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+
+    <style>
+        :root {
+            --color-void: #000000;
+            --color-abyss: #0a0a0a;
+            --color-surface: #111111;
+            --color-ember: #CF2323;
+            --color-blood: #8b0000;
+            --color-soul: #E5E7EB;
+            --color-smoke: #A1A1AA;
+            
+            --font-sigil: 'Russo One', sans-serif;
+            --font-scripture: 'Cormorant Garamond', serif;
+            --font-code: 'Space Mono', monospace;
+
+            --shadow-glow: 0 0 15px rgba(207, 35, 35, 0.3), 0 0 30px rgba(207, 35, 35, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            background-color: var(--color-void);
+            color: var(--color-soul);
+            font-family: var(--font-scripture);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* --- Cursor Personalizado --- */
+        .cursor-dot, .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            border-radius: 50%;
+            z-index: 9999;
+            mix-blend-mode: difference;
+        }
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--color-ember);
+        }
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--color-ember);
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        }
+        body:hover .cursor-outline { opacity: 1; }
+
+        /* --- Fondo Animado --- */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        /* --- Layout y Contenedores --- */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 25px;
+            position: relative;
+            z-index: 2;
+        }
+        .section {
+            padding: 150px 0;
+            position: relative;
+        }
+
+        /* --- Animaciones de Scroll --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Header --- */
+        .header {
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: background-color 0.5s ease;
+        }
+        .header.scrolled {
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--color-border);
+        }
+        .header .container { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: var(--font-sigil); font-size: 1.8rem; text-decoration: none; color: var(--color-soul); }
+        .nav-links a {
+            font-family: var(--font-code);
+            color: var(--color-smoke);
+            text-decoration: none;
+            margin-left: 30px;
+            font-size: 0.9rem;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+        .nav-links a:hover { color: var(--color-ember); text-shadow: 0 0 5px var(--color-ember); }
+
+        /* --- Hero Section --- */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+        .hero-title {
+            font-family: var(--font-sigil);
+            font-size: clamp(3rem, 10vw, 6rem);
+            line-height: 1.1;
+            text-transform: uppercase;
+            color: var(--color-soul);
+            margin-bottom: 24px;
+        }
+        .glitch {
+            position: relative;
+            animation: glitch-anim 5s infinite;
+        }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--color-void);
+            overflow: hidden;
+        }
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 var(--color-ember);
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim-2 2s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 var(--color-blood), 2px 2px var(--color-ember);
+            clip: rect(85px, 450px, 90px, 0);
+            animation: glitch-anim-1 3s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim { 0%, 100% { text-shadow: none; } 20%, 80% { text-shadow: 2px 2px var(--color-ember), -2px -2px var(--color-blood); } }
+        @keyframes glitch-anim-1 { 0% { clip: rect(42px, 9999px, 44px, 0); } 100% { clip: rect(2px, 9999px, 92px, 0); } }
+        @keyframes glitch-anim-2 { 0% { clip: rect(12px, 9999px, 99px, 0); } 100% { clip: rect(1px, 9999px, 78px, 0); } }
+
+        .hero-subtitle {
+            font-family: var(--font-code);
+            font-size: 1.2rem;
+            color: var(--color-smoke);
+            max-width: 600px;
+            margin: 0 auto 40px auto;
+            line-height: 1.8;
+        }
+        .button {
+            font-family: var(--font-sigil);
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 5px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            border: 1px solid var(--color-ember);
+            background: transparent;
+            color: var(--color-ember);
+            text-shadow: 0 0 5px var(--color-ember);
+            box-shadow: 0 0 10px var(--color-ember) inset, 0 0 10px var(--color-ember);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: var(--color-ember);
+            color: var(--color-void);
+            box-shadow: 0 0 20px var(--color-ember), 0 0 40px var(--color-ember);
+        }
+
+        /* --- Pricing Section --- */
+        .section-header { text-align: center; margin-bottom: 80px; }
+        .section-title { font-family: var(--font-sigil); font-size: clamp(2.2rem, 5vw, 3rem); text-transform: uppercase; margin-bottom: 16px; }
+        .section-subtitle { font-family: var(--font-scripture); font-size: clamp(1.1rem, 3vw, 1.3rem); color: var(--color-smoke); max-width: 750px; margin: 0 auto; line-height: 1.7; }
+        
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; align-items: stretch; }
+        .pricing-card {
+            background: linear-gradient(145deg, var(--color-surface), var(--color-abyss));
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 10px; /* Reduced padding for the container */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .pricing-card::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: conic-gradient(transparent, var(--color-ember), transparent 30%);
+            animation: rotate 6s linear infinite;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .pricing-card:hover::before { opacity: 1; }
+        .pricing-card .card-content {
+            background: var(--color-abyss);
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+            padding: 30px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+
+        .pricing-card .tag { font-family: var(--font-code); font-size: 0.8rem; color: var(--color-ember); text-transform: uppercase; }
+        .pricing-card .plan-name { font-family: var(--font-sigil); font-size: 2rem; margin: 8px 0 16px 0; }
+        .pricing-card .price { font-family: var(--font-sigil); font-size: 3.5rem; margin-bottom: 4px; }
+        .pricing-card .price-term { color: var(--color-smoke); font-size: 1rem; }
+        .pricing-card .features { list-style: none; margin: 30px 0; flex-grow: 1; }
+        .pricing-card .features li {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            display: flex;
+            align-items: flex-start;
+        }
+        .pricing-card .features li::before {
+            content: '☩';
+            color: var(--color-ember);
+            margin-right: 12px;
+            font-weight: bold;
+        }
+        .checkout-btn-container { margin-top: auto; }
+
+        /* --- Footer --- */
+        .footer { padding: 60px 0; text-align: center; background-color: var(--color-void); border-top: 1px solid var(--color-border); }
+        .footer p { color: var(--color-smoke); font-family: var(--font-code); font-size: 0.9rem; }
+        .footer a { color: var(--color-ember); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <header class="header">
+        <div class="container">
+            <a href="#" class="logo">DARKTRAINING</a>
+            <nav class="nav-links">
+                <a href="#filosofia">Filosofía</a>
+                <a href="#planes">Planes</a>
+                <a href="#contacto">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="hero">
+            <div class="container">
+                <h1 class="hero-title glitch" data-text="TRANSFORMA TU FÍSICO">TRANSFORMA TU FÍSICO</h1>
+                <p class="hero-subtitle reveal">Planes de entrenamiento y nutrición personalizados para resultados reales. Deja de adivinar y empieza a construir la mejor versión de ti.</p>
+                <a href="#planes" class="button reveal" style="transition-delay: 0.2s;">Ver Planes</a>
+            </div>
+        </section>
+
+        <section id="filosofia" class="section">
+            <div class="container">
+                <div class="section-header reveal">
+                    <h2 class="section-title">El Método DARKTRAINING</h2>
+                    <p class="section-subtitle">Creemos en un enfoque inteligente y basado en la ciencia. Cada plan de entrenamiento y nutrición es una herramienta de precisión, diseñada para optimizar tu progreso y eliminar las conjeturas. Dejamos atrás las rutinas genéricas para enfocarnos en lo que realmente funciona para ti.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="planes" class="section">
+            <div class="container">
+                <div class="section-header reveal">
+                    <h2 class="section-title">Elige Tu Plan</h2>
+                    <p class="section-subtitle">Planes diseñados para adaptarse a tu nivel de compromiso y tus objetivos. Ya sea que busques perder grasa, ganar músculo o mejorar tu rendimiento, aquí comienza tu transformación.</p>
+                </div>
+
+                <div class="pricing-grid">
+                    <div class="pricing-card reveal">
+                        <div class="card-content">
+                            <p class="tag">Acceso Total</p>
+                            <h3 class="plan-name">Satori</h3>
+                            <p class="price">$1,020 <span class="price-term">MXN/mes</span></p>
+                            <ul class="features">
+                                <li>El ecosistema completo de DARKTRAINING</li>
+                                <li>Supervisión y personalización continua</li>
+                                <li>Acceso a la App y Soporte 1-a-1</li>
+                                <li>Comunidad cifrada en Discord</li>
+                                <li>Análisis de ejecución mensual</li>
+                                <li>Acceso a todo el conocimiento arcano</li>
+                            </ul>
+                            <div class="checkout-btn-container">
+                                <a href="https://www.patreon.com/c/user/membership?u=23723781" target="_blank" class="button">Unirme en Patreon</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pricing-card reveal" style="transition-delay: 0.2s;">
+                        <div class="card-content">
+                            <p class="tag">Plan de 15 Semanas</p>
+                            <h3 class="plan-name">Transformación Acelerada</h3>
+                            <p class="price">$2999 <span class="price-term">MXN</span></p>
+                            <ul class="features">
+                                <li>Protocolo de nutrición y entrenamiento</li>
+                                <li>Estrategia de suplementación</li>
+                                <li>Acceso completo a la App</li>
+                                <li>Soporte 1-a-1 por Telegram</li>
+                                <li><b>Sincronización quincenal por videollamada</b></li>
+                            </ul>
+                            <div class="checkout-btn-container" id="checkout-btn-15-semanas"></div>
+                        </div>
+                    </div>
+
+                    <div class="pricing-card reveal" style="transition-delay: 0.4s;">
+                        <div class="card-content">
+                            <p class="tag">Plan de 30 Semanas</p>
+                            <h3 class="plan-name">Metamorfosis Completa</h3>
+                            <p class="price">$4299 <span class="price-term">MXN</span></p>
+                            <ul class="features">
+                                <li>Todos los elementos del plan de 15 semanas</li>
+                                <li>Planificación a largo plazo</li>
+                                <li>Ajustes prioritarios del sistema</li>
+                                <li><b>La transformación más profunda</b></li>
+                            </ul>
+                            <div class="checkout-btn-container" id="checkout-btn-30-semanas"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="contacto" class="footer">
+        <div class="container">
+            <p>&copy; 2025 DARKTRAINING // El Santuario es eterno.</p>
+            <p>Las comunicaciones se inician a través del nexo en <a href="https://t.me/kojicoachbot" target="_blank">Telegram</a>.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Script del Cursor ---
+            const cursorDot = document.querySelector('.cursor-dot');
+            const cursorOutline = document.querySelector('.cursor-outline');
+            window.addEventListener('mousemove', function (e) {
+                const posX = e.clientX;
+                const posY = e.clientY;
+                cursorDot.style.left = `${posX}px`;
+                cursorDot.style.top = `${posY}px`;
+                cursorOutline.animate({
+                    left: `${posX}px`,
+                    top: `${posY}px`
+                }, { duration: 500, fill: "forwards" });
+            });
+
+            // --- Script del Header ---
+            const header = document.querySelector('.header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            // --- Script de Animaciones de Scroll ---
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+            // --- Script del Canvas de Partículas ---
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let particlesArray;
+
+            let mouse = { x: null, y: null, radius: (canvas.height/120) * (canvas.width/120) };
+            window.addEventListener('mousemove', e => {
+                mouse.x = e.x;
+                mouse.y = e.y;
+            });
+
+            class Particle {
+                constructor(x, y, directionX, directionY, size, color) {
+                    this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY; this.size = size; this.color = color;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.fillStyle = 'rgba(207, 35, 35, 0.5)';
+                    ctx.fill();
+                }
+                update() {
+                    if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+                    if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    if (distance < mouse.radius + this.size) {
+                        if (mouse.x < this.x && this.x < canvas.width - this.size * 10) this.x += 5;
+                        if (mouse.x > this.x && this.x > this.size * 10) this.x -= 5;
+                        if (mouse.y < this.y && this.y < canvas.height - this.size * 10) this.y += 5;
+                        if (mouse.y > this.y && this.y > this.size * 10) this.y -= 5;
+                    }
+                    this.x += this.directionX;
+                    this.y += this.directionY;
+                    this.draw();
+                }
+            }
+
+            function initParticles() {
+                particlesArray = [];
+                let numberOfParticles = (canvas.height * canvas.width) / 9000;
+                for (let i = 0; i < numberOfParticles; i++) {
+                    let size = (Math.random() * 2) + 1;
+                    let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                    let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                    let directionX = (Math.random() * 0.4) - 0.2;
+                    let directionY = (Math.random() * 0.4) - 0.2;
+                    particlesArray.push(new Particle(x, y, directionX, directionY, size));
+                }
+            }
+
+            function animateParticles() {
+                requestAnimationFrame(animateParticles);
+                ctx.clearRect(0, 0, innerWidth, innerHeight);
+                for (let i = 0; i < particlesArray.length; i++) {
+                    particlesArray[i].update();
+                }
+            }
+            
+            initParticles();
+            animateParticles();
+            
+            window.addEventListener('resize', () => {
+                canvas.width = innerWidth;
+                canvas.height = innerHeight;
+                mouse.radius = (canvas.height/120) * (canvas.width/120);
+                initParticles();
+            });
+
+            // --- Script de Mercado Pago ---
+            if (typeof MercadoPago === 'undefined') {
+                console.error("SDK de Mercado Pago no se ha cargado.");
+                return;
+            }
+
+            const mp = new MercadoPago('APP_USR-f9090841-8f00-4d4b-aa72-a371bd94a807', { locale: 'es-MX' });
+
+            async function createCheckout(price, title, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = 'Iniciando conexión...';
+
+                const backendUrl = 'https://darktraining-backend.vercel.app/api/create-preference';
+
+                try {
+                    const response = await fetch(backendUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: title, price: price }),
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Error del nexo: ${response.status} - ${errorText}`);
+                    }
+                    
+                    const preference = await response.json();
+                    
+                    if (preference.id) {
+                        container.innerHTML = '';
+                        mp.checkout({
+                            preference: { id: preference.id },
+                            render: {
+                                container: `#${containerId}`,
+                                label: 'Adquirir Plan',
+                            },
+                            theme: {
+                                elementsColor: '#CF2323',
+                                headerColor: '#0a0a0a'
+                            }
+                        });
+                    } else {
+                        throw new Error('Respuesta del nexo incompleta.');
+                    }
+                } catch (error) {
+                    console.error("Fallo en el ritual de pago:", error);
+                    container.innerHTML = '<p style="font-size:0.9rem; color:var(--color-smoke);">La conexión ha fallado. Intenta de nuevo.</p>';
+                }
+            }
+
+            createCheckout(2999, 'Plan de 15 Semanas', 'checkout-btn-15-semanas');
+            createCheckout(4299, 'Plan de 30 Semanas', 'checkout-btn-30-semanas');
+        });
+    </script>
+
+</body>
+</html>
