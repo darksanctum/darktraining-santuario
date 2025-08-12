@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Cormorant+Garamond:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
 
     <style>
         :root {
@@ -334,10 +336,7 @@
                                 <li>Soporte 1-a-1 por Telegram</li>
                                 <li><b>Sincronización quincenal por videollamada</b></li>
                             </ul>
-                            <div class="checkout-btn-container">
-                                <!-- BOTÓN CON LINK DE PAGO DIRECTO -->
-                                <a href="https://mpago.li/1JvfisW" target="_blank" class="button">Forjar Pacto</a>
-                            </div>
+                            <div class="checkout-btn-container" id="checkout-btn-15-semanas"></div>
                         </div>
                     </div>
 
@@ -352,10 +351,7 @@
                                 <li>Ajustes prioritarios del sistema</li>
                                 <li><b>La transformación más profunda</b></li>
                             </ul>
-                            <div class="checkout-btn-container">
-                                <!-- BOTÓN CON LINK DE PAGO DIRECTO -->
-                                <a href="https://mpago.la/2h4czjW" target="_blank" class="button">Forjar Pacto</a>
-                            </div>
+                            <div class="checkout-btn-container" id="checkout-btn-30-semanas"></div>
                         </div>
                     </div>
                 </div>
@@ -371,7 +367,7 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // --- Script del Cursor ---
             const cursorDot = document.querySelector('.cursor-dot');
             const cursorOutline = document.querySelector('.cursor-outline');
@@ -478,6 +474,78 @@
                 mouse.radius = (canvas.height/120) * (canvas.width/120);
                 initParticles();
             });
+
+            // --- Script de Mercado Pago ---
+            const backendUrl = 'https://darktraining-backend.vercel.app';
+            
+            // 1. Chequeo de salud del backend
+            try {
+                const healthResponse = await fetch(`${backendUrl}/api/health`);
+                if (!healthResponse.ok) {
+                    throw new Error(`El nexo no responde. Estado: ${healthResponse.status}`);
+                }
+                const healthData = await healthResponse.text();
+                console.log("Estado del nexo:", healthData);
+            } catch (error) {
+                console.error("Fallo crítico en la conexión con el nexo:", error);
+                const errorMsg = '<p style="font-size:0.9rem; color:var(--color-smoke);">Error de conexión con el servidor.</p>';
+                document.getElementById('checkout-btn-15-semanas').innerHTML = errorMsg;
+                document.getElementById('checkout-btn-30-semanas').innerHTML = errorMsg;
+                return; // Detiene la ejecución si el backend no está disponible
+            }
+
+            // 2. Inicialización de Mercado Pago
+            if (typeof MercadoPago === 'undefined') {
+                console.error("SDK de Mercado Pago no se ha cargado.");
+                return;
+            }
+            const mp = new MercadoPago('APP_USR-f9090841-8f00-4d4b-aa72-a371bd94a807', { locale: 'es-MX' });
+
+            // 3. Función para crear los botones de pago
+            async function createCheckout(price, title, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = 'Iniciando conexión...';
+
+                try {
+                    const response = await fetch(`${backendUrl}/api/create-preference`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: title, price: price }),
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Error del nexo: ${response.status} - ${errorText}`);
+                    }
+                    
+                    const preference = await response.json();
+                    
+                    if (preference.id) {
+                        container.innerHTML = '';
+                        mp.checkout({
+                            preference: { id: preference.id },
+                            render: {
+                                container: `#${containerId}`,
+                                label: 'Forjar Pacto',
+                            },
+                            theme: {
+                                elementsColor: '#CF2323',
+                                headerColor: '#0a0a0a'
+                            }
+                        });
+                    } else {
+                        throw new Error('Respuesta del nexo incompleta.');
+                    }
+                } catch (error) {
+                    console.error("Fallo en el ritual de pago:", error);
+                    container.innerHTML = '<p style="font-size:0.9rem; color:var(--color-smoke);">La conexión ha fallado. Intenta de nuevo.</p>';
+                }
+            }
+
+            // 4. Crear los botones
+            createCheckout(2999, 'Plan de 15 Semanas', 'checkout-btn-15-semanas');
+            createCheckout(4299, 'Plan de 30 Semanas', 'checkout-btn-30-semanas');
         });
     </script>
 
