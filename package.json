@@ -1,13 +1,16 @@
-
 {
-  "name": "darktraining-automated-backend",
+  "name": "umbra-coaching-platform",
   "version": "1.0.0",
-  "description": "Backend to handle Mercado Pago webhooks and send emails.",
-  "main": "api/index.js",
+  "private": true,
   "scripts": {
-    "start": "node api/index.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "mercadopago": "^2.0.0",
